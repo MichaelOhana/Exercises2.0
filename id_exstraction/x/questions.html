@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Exercises</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="video">
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ video_id }}" frameborder="0" allowfullscreen></iframe>
+        </div>
+        <div class="exercise">
+            <h2>Exercise: {{ exercise.word }}</h2>
+            
+            <p>Fill in the Blank: {{ exercise.fill_in_the_blank }}</p>
+            <p>Multiple Choice: {{ exercise.multiple_choice.question }}</p>
+            <ul>
+                {% for option in exercise.multiple_choice.options %}
+                    <li>{{ option }}</li>
+                {% endfor %}
+            </ul>
+            <p>True or False: {{ exercise.true_false }}</p>
+
+            <form action="{{ url_for('next_exercise') }}" method="POST">
+                <button type="submit">Next Exercise</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>
