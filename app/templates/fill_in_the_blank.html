@@ -2,24 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fill in the Blank Question</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='fill_in_the_blank/style.css') }}">
 </head>
 <body>
     <div class="container">
         <h2>Complete the Sentence</h2>
-        
-        <!-- Display the sentence with a blank space for user input -->
+        <!-- Placeholder for the sentence with blank -->
         <div id="sentenceText">Loading question...</div>
-        
-        <!-- Feedback section to display correct or incorrect messages -->
+        <!-- Feedback section -->
         <div id="feedback"></div>
-        
-        <!-- Submit button for user answer -->
+        <!-- Submit button -->
         <button id="submitBtn">Submit</button>
     </div>
-    
     <script src="{{ url_for('static', filename='fill_in_the_blank/script.js') }}"></script>
 </body>
 </html>

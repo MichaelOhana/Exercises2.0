@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Vocabulary Lesson</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .lesson-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .word-section {
+            display: none; /* Initially hidden */
+            margin: 30px 0;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .word-section.active {
+            display: block;
+        }
+        .word-title {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .content-block {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            background: #f8f9fa;
+            transition: background-color 0.3s ease;
+        }
+        .content-block.highlight {
+            background-color: #e8f4f8;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .progress-bar {
+            height: 10px;
+            background: #e0e0e0;
+            margin: 20px 0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #3498db;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .audio-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .highlight {
+            background-color: #ffd700;
+            border-radius: 3px;
+            transition: background-color 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="lesson-container">
+        <h1 class="text-center mb-4">Your Interactive Vocabulary Lesson</h1>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+
+        {% if script and script.words %}
+            {% for word_item in script.words %}
+            <div class="word-section" id="word-section-{{ loop.index0 }}">
+                <div class="word-title" id="word-{{ loop.index0 }}">{{ word_item.word }}</div>
+                
+                <div class="audio-controls">
+                    <button class="btn btn-primary btn-sm play-pause">
+                        <i class="fas fa-play"></i> Play
+                    </button>
+                    <button class="btn btn-secondary btn-sm replay">
+                        <i class="fas fa-redo"></i> Replay
+                    </button>
+                </div>
+
+                <div class="content-block definition" id="definition-{{ loop.index0 }}">
+                    <strong>Definition:</strong> {{ word_item.definition }}
+                </div>
+                
+                <div class="content-block example" id="example-{{ loop.index0 }}">
+                    <strong>Example:</strong> {{ word_item.example_sentence }}
+                </div>
+                
+                <div class="content-block tip" id="tip-{{ loop.index0 }}">
+                    <strong>Usage Tip:</strong> {{ word_item.usage_tip }}
+                </div>
+
+                <div class="navigation">
+                    <button class="btn btn-outline-primary prev-word" {% if loop.first %}disabled{% endif %}>
+                        Previous Word
+                    </button>
+                    <button class="btn btn-outline-primary next-word" {% if loop.last %}disabled{% endif %}>
+                        Next Word
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentWordIndex = 0;
+            const totalWords = {{ script.words|length if script and script.words else 0 }};
+            let currentAudio = null;
+            let highlightInterval = null;
+            
+            function showWord(index) {
+                // Hide all word sections
+                document.querySelectorAll('.word-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show current word section
+                const currentSection = document.getElementById(`word-section-${index}`);
+                currentSection.classList.add('active');
+                
+                // Update progress bar
+                const progress = ((index + 1) / totalWords) * 100;
+                document.querySelector('.progress-fill').style.width = `${progress}%`;
+                
+                currentWordIndex = index;
+            }
+
+            function highlightText(element, alignment, currentTime) {
+                const chars = alignment.characters;
+                const startTimes = alignment.character_start_times_seconds;
+                const endTimes = alignment.character_end_times_seconds;
+                
+                let text = element.textContent;
+                let highlightedText = '';
+                
+                for (let i = 0; i < chars.length; i++) {
+                    if (currentTime >= startTimes[i] && currentTime <= endTimes[i]) {
+                        highlightedText += `<span class="highlight">${chars[i]}</span>`;
+                    } else {
+                        highlightedText += chars[i];
+                    }
+                }
+                
+                element.innerHTML = highlightedText;
+            }
+
+            function playAudio(audioBase64, alignment, textElement) {
+                if (currentAudio) {
+                    currentAudio.pause();
+                    clearInterval(highlightInterval);
+                }
+
+                const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
+                currentAudio = audio;
+
+                audio.addEventListener('timeupdate', () => {
+                    highlightText(textElement, alignment, audio.currentTime);
+                });
+
+                audio.addEventListener('ended', () => {
+                    clearInterval(highlightInterval);
+                    textElement.innerHTML = textElement.textContent; // Remove highlighting
+                });
+
+                audio.play();
+            }
+
+            // Initialize first word
+            showWord(0);
+
+            // Event listeners for navigation
+            document.querySelectorAll('.next-word').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentWordIndex < totalWords - 1) {
+                        showWord(currentWordIndex + 1);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.prev-word').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentWordIndex > 0) {
+                        showWord(currentWordIndex - 1);
+                    }
+                });
+            });
+
+            // Add event listeners for play buttons
+            document.querySelectorAll('.play-pause').forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    const wordItem = {{ script.words|tojson|safe }}[index];
+                    const section = document.getElementById(`word-section-${index}`);
+                    
+                    // Play word pronunciation
+                    const wordElement = section.querySelector('.word-title');
+                    playAudio(wordItem.word_audio, wordItem.word_alignment, wordElement);
+                    
+                    // After word pronunciation, play explanation
+                    setTimeout(() => {
+                        const explanationElement = section.querySelector('.content-block');
+                        playAudio(wordItem.explanation_audio, wordItem.explanation_alignment, explanationElement);
+                    }, 1000);
+                });
+            });
+
+            // Add event listeners for replay buttons
+            document.querySelectorAll('.replay').forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    const playBtn = document.querySelectorAll('.play-pause')[index];
+                    playBtn.click();
+                });
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,8 @@
+flask
+flask-login
+flask-sqlalchemy
+oauthlib
+requests
+python-dotenv
+youtube_transcript_api
+openai 

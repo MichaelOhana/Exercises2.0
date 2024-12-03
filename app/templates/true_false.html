@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>True or False Question</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='true_false/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>True or False</h2>
+        <!-- Placeholder for the statement -->
+        <div id="statementText">Loading question...</div>
+        <!-- True and False buttons -->
+        <div id="optionsContainer">
+            <button id="trueBtn">True</button>
+            <button id="falseBtn">False</button>
+        </div>
+        <!-- Feedback section -->
+        <div id="feedback"></div>
+    </div>
+    <script src="{{ url_for('static', filename='true_false/script.js') }}"></script>
+</body>
+</html>

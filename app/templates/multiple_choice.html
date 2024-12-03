@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Multiple Choice Question</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='multiple_choice/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Multiple Choice Question</h2>
+        <!-- Placeholder for the question text -->
+        <div id="questionText">Loading question...</div>
+        <!-- Container for the options -->
+        <div id="optionsContainer"></div>
+        <!-- Feedback section -->
+        <div id="feedback"></div>
+    </div>
+    <script src="{{ url_for('static', filename='multiple_choice/script.js') }}"></script>
+</body>
+</html>
