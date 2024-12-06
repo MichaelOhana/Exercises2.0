@@ -1,0 +1,79 @@
+.course-page {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.navigation {
+    position: relative;
+    width: 300px;
+    height: 100%;
+    background-color: #f5f5f5;
+    transition: width 0.3s ease;
+    border-right: 1px solid #ddd;
+}
+
+.navigation.closed {
+    width: 0;
+}
+
+.nav-content {
+    padding: 20px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.unit {
+    margin-bottom: 20px;
+}
+
+.unit-content {
+    padding-left: 15px;
+}
+
+.content-item {
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.content-item:hover {
+    background-color: #e0e0e0;
+}
+
+.toggle-button {
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 60px;
+    border: none;
+    background-color: #f5f5f5;
+    cursor: pointer;
+    border: 1px solid #ddd;
+    border-left: none;
+}
+
+.content-display {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    font-size: 1.2em;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .navigation {
+        position: absolute;
+        z-index: 100;
+    }
+} 

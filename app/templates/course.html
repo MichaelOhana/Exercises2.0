@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ course.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/course.css') }}">
+</head>
+<body>
+    <div class="course-container">
+        <!-- Navigation Menu -->
+        <nav class="course-nav" id="courseNav">
+            <div class="nav-header">
+                <h2>{{ course.title }}</h2>
+                <button id="toggleNav" class="toggle-nav">≡</button>
+            </div>
+            <div class="nav-content">
+                {% for unit in course.units %}
+                <div class="unit">
+                    <div class="unit-header" data-unit-id="{{ unit.id }}">
+                        <span class="unit-toggle">{{ '▼' if unit.expanded else '▶' }}</span>
+                        {{ unit.title }}
+                    </div>
+                    <div class="unit-items {{ 'expanded' if unit.expanded else '' }}">
+                        {% for item in unit.content %}
+                        <div class="nav-item {{ 'active' if item.get('active') else '' }}" 
+                             data-type="{{ item.type }}" 
+                             data-id="{{ item.id }}">
+                            {{ item.title }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content-area" id="contentArea">
+            <div id="contentDisplay">
+                Select a lesson to begin
+            </div>
+            <div class="navigation-controls">
+                <button id="prevButton" class="nav-button">Previous</button>
+                <button id="nextButton" class="nav-button">Next</button>
+            </div>
+        </main>
+    </div>
+    <script src="{{ url_for('static', filename='js/course.js') }}"></script>
+</body>
+</html> 

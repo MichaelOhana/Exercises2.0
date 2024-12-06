@@ -1,0 +1,19 @@
+.contentDisplay {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.expanded {
+  margin-left: 0;
+}
+
+.placeholder {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  font-size: 1.2em;
+  color: #666;
+} 

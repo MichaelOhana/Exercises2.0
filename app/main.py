@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, session, jsonify
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify, flash
 from youtube_transcript_api import YouTubeTranscriptApi
 import openai
 import os
@@ -10,6 +10,7 @@ import uuid  # Add this import at the top
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from oauthlib.oauth2 import WebApplicationClient
 from models import db, User
+from oauthlib.oauth2.rfc6749.errors import InsecureTransportError
 
 load_dotenv()  # Add this near the top of your file
 
@@ -19,6 +20,11 @@ GOOGLE_CLIENT_SECRET='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'
 
 app = Flask(__name__)
 app.secret_key = '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'  # Replace with your own secret key
+
+# Add these database configuration lines
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  # SQLite database file
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
 # Toggle this flag to switch between testing mode (mock data) and real API calls
 TESTING = True
 openai.api_key = os.getenv('OPENAI_API_KEY')  # Ensure your API key is set in the environment variable
@@ -55,7 +61,7 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('index'))
+            return redirect(next_page or url_for('default_course'))
         
         flash('Invalid email or password')
     return render_template('login.html')
@@ -77,7 +83,7 @@ def register():
         db.session.commit()
         
         login_user(user)
-        return redirect(url_for('index'))
+        return redirect(url_for('default_course'))
     return render_template('register.html')
 
 @app.route('/logout')
@@ -103,61 +109,73 @@ def google_login():
 
 @app.route('/login/google/callback')
 def google_callback():
-    # Get authorization code Google sent back
-    code = request.args.get("code")
-    
-    # Find out what URL to hit to get tokens
-    google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
-    token_endpoint = google_provider_cfg["token_endpoint"]
+    try:
+        # Get authorization code Google sent back
+        code = request.args.get("code")
+        
+        # Find out what URL to hit to get tokens
+        google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
+        token_endpoint = google_provider_cfg["token_endpoint"]
 
-    # Get tokens
-    token_url, headers, body = client.prepare_token_request(
-        token_endpoint,
-        authorization_response=request.url,
-        redirect_url=request.base_url,
-        code=code
-    )
-    token_response = requests.post(
-        token_url,
-        headers=headers,
-        data=body,
-        auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
-    )
+        # Get tokens
+        token_url, headers, body = client.prepare_token_request(
+            token_endpoint,
+            authorization_response=request.url,
+            redirect_url=request.base_url,
+            code=code
+        )
+        token_response = requests.post(
+            token_url,
+            headers=headers,
+            data=body,
+            auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
+        )
 
-    # Parse the tokens
-    client.parse_request_body_response(json.dumps(token_response.json()))
+        # Parse the tokens
+        client.parse_request_body_response(json.dumps(token_response.json()))
 
-    # Get user info from Google
-    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
+        # Get user info from Google
+        userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+        uri, headers, body = client.add_token(userinfo_endpoint)
+        userinfo_response = requests.get(uri, headers=headers, data=body)
 
-    if userinfo_response.json().get("email_verified"):
-        google_id = userinfo_response.json()["sub"]
-        email = userinfo_response.json()["email"]
-        name = userinfo_response.json()["given_name"]
+        if userinfo_response.json().get("email_verified"):
+            google_id = userinfo_response.json()["sub"]
+            email = userinfo_response.json()["email"]
+            name = userinfo_response.json().get("given_name", email)
 
-        # Check if user exists
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            user = User(
-                email=email,
-                name=name,
-                google_id=google_id
-            )
-            db.session.add(user)
-            db.session.commit()
+            # Check if user exists
+            user = User.query.filter_by(email=email).first()
+            if not user:
+                user = User(
+                    email=email,
+                    name=name,
+                    google_id=google_id
+                )
+                db.session.add(user)
+                db.session.commit()
 
-        login_user(user)
-        return redirect(url_for('index'))
-    else:
-        flash("Google authentication failed")
+            login_user(user)
+            return redirect(url_for('default_course'))
+        else:
+            flash("Google authentication failed - Email not verified")
+            return redirect(url_for('login'))
+            
+    except Exception as e:
+        print(f"Error in Google callback: {str(e)}")
+        flash(f"Failed to log in with Google: {str(e)}")
         return redirect(url_for('login'))
 
 # Add @login_required decorator to routes that need authentication
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
 @login_required
-def show_quiz():
+def index():
+    return redirect(url_for('default_course'))
+
+# Move the YouTube URL functionality to a different route
+@app.route('/youtube-exercises', methods=['GET', 'POST'])
+@login_required
+def youtube_exercises():
     if request.method == 'POST':
         youtube_url = request.form.get('youtube_url')
         try:
@@ -279,7 +297,7 @@ def get_transcript(video_id):
         return None
 
 @app.route('/youtube_url', methods=['GET', 'POST'])
-def index():
+def youtube_url_handler():
     if request.method == 'POST':
         youtube_url = request.form['youtube_url']
         try:
@@ -613,5 +631,72 @@ def generating_course():
     
     return render_template('generating_course.html', script=script)
 
+@app.route('/course/<course_id>')
+@login_required
+def course_page(course_id):
+    # Mock course data - this would eventually come from your database
+    course_structure = {
+        'title': 'Sample Course',
+        'units': [
+            {
+                'id': 1,
+                'title': 'Unit 1: Introduction',
+                'expanded': True,
+                'content': [
+                    {'id': 1, 'type': 'lesson', 'title': 'Welcome to the Course', 'active': True},
+                    {'id': 2, 'type': 'exercise', 'title': 'Practice Exercise 1'},
+                    {'id': 3, 'type': 'quiz', 'title': 'Unit 1 Quiz'}
+                ]
+            },
+            {
+                'id': 2,
+                'title': 'Unit 2: Core Concepts',
+                'expanded': False,
+                'content': [
+                    {'id': 4, 'type': 'lesson', 'title': 'Basic Principles'},
+                    {'id': 5, 'type': 'exercise', 'title': 'Practice Exercise 2'},
+                    {'id': 6, 'type': 'quiz', 'title': 'Unit 2 Quiz'}
+                ]
+            }
+        ]
+    }
+    return render_template('course.html', course=course_structure)
+
+@app.route('/course')
+@login_required
+def default_course():
+    return redirect(url_for('course_page', course_id='default'))
+
+@app.route('/api/content/<content_type>/<int:content_id>')
+@login_required
+def get_content(content_type, content_id):
+    # Mock content data - this would eventually come from your database
+    content = {
+        'lesson': {
+            'title': 'Sample Lesson',
+            'introduction': 'This is the lesson introduction.',
+            'content': 'Main lesson content goes here.',
+            'summary': 'Lesson summary goes here.'
+        },
+        'exercise': {
+            'title': 'Practice Exercise',
+            'instructions': 'Complete the following exercises.',
+            'questions': ['Question 1', 'Question 2']
+        },
+        'quiz': {
+            'title': 'Unit Quiz',
+            'questions': [
+                {
+                    'question': 'Sample question?',
+                    'options': ['Option 1', 'Option 2', 'Option 3'],
+                    'correct': 0
+                }
+            ]
+        }
+    }
+    return jsonify(content.get(content_type, {'error': 'Content not found'}))
+
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()  # Create database tables
     app.run(debug=True)

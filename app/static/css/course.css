@@ -1,0 +1,125 @@
+.course-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.course-nav {
+    width: 300px;
+    background-color: #f5f5f5;
+    border-right: 1px solid #ddd;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.course-nav.collapsed {
+    width: 50px;
+    min-width: 50px;
+}
+
+.course-nav.collapsed .nav-content {
+    display: none;
+}
+
+.course-nav.collapsed .nav-header h2 {
+    display: none;
+}
+
+.nav-header {
+    padding: 1rem;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.toggle-nav {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    min-width: 30px;
+    z-index: 1000;
+}
+
+.nav-content {
+    padding: 1rem;
+}
+
+.unit {
+    margin-bottom: 1rem;
+}
+
+.unit-header {
+    cursor: pointer;
+    padding: 0.5rem;
+    background-color: #eee;
+    margin-bottom: 0.5rem;
+}
+
+.unit-items {
+    padding-left: 1.5rem;
+    display: none;
+}
+
+.unit-items.expanded {
+    display: block;
+}
+
+.nav-item {
+    padding: 0.5rem;
+    cursor: pointer;
+}
+
+.nav-item:hover {
+    background-color: #e0e0e0;
+}
+
+.content-area {
+    flex-grow: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#contentDisplay {
+    flex-grow: 1;
+}
+
+.navigation-controls {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 0;
+}
+
+.nav-button {
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.nav-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .course-nav {
+        position: fixed;
+        height: 100vh;
+        z-index: 1000;
+    }
+
+    .course-nav.collapsed {
+        width: 0;
+        overflow: hidden;
+    }
+}
+
+.nav-item.active {
+    background-color: #007bff;
+    color: white;
+}

@@ -1,0 +1,57 @@
+.navigation {
+  position: relative;
+  width: 300px;
+  height: 100%;
+  background-color: #f5f5f5;
+  transition: width 0.3s ease;
+  border-right: 1px solid #ddd;
+}
+
+.closed {
+  width: 0;
+}
+
+.content {
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.unit {
+  margin-bottom: 20px;
+}
+
+.unitContent {
+  padding-left: 15px;
+}
+
+.contentItem {
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.contentItem:hover {
+  background-color: #e0e0e0;
+}
+
+.toggleButton {
+  position: absolute;
+  right: -30px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 60px;
+  border: none;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  border: 1px solid #ddd;
+  border-left: none;
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    position: absolute;
+    z-index: 100;
+  }
+} 
