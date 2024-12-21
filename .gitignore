@@ -1,6 +1,8 @@
 # Python virtual environment
 venv/
 env/
+venv_311/
+env_311/
 
 # Python cache files
 __pycache__/
@@ -26,3 +28,66 @@ app/static/audio/*
 # OS generated files
 .DS_Store
 Thumbs.db 
+
+# Python packages and distributions
+*.egg-info/
+dist/
+build/
+*.egg
+
+
+# Virtual Environment
+venv*/
+.venv/
+env*/
+.env/
+*venv/
+*env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment Variables
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Application specific
+app/static/scripts/*.json
+app/static/audio/*
+!app/static/audio/.gitkeep
+
+# Logs and databases
+*.log
+*.sqlite3
+
+venv_311/
+env_311/
+    

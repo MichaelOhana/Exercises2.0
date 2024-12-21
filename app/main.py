@@ -1,35 +1,33 @@
 from flask import Flask, request, render_template, redirect, url_for, session, jsonify, flash
-from youtube_transcript_api import YouTubeTranscriptApi
 import openai
 import os
 import json
 import requests
 import base64
-from dotenv import load_dotenv
-import uuid  # Add this import at the top
+import uuid
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from oauthlib.oauth2 import WebApplicationClient
-from models import db, User
+from .models import db, User
 from oauthlib.oauth2.rfc6749.errors import InsecureTransportError
+from flask import Blueprint
+from .config import *  # Import all config variables
 
-load_dotenv()  # Add this near the top of your file
+# Create blueprint
+main_bp = Blueprint('main', __name__)
 
-GOOGLE_CLIENT_ID='407009912770-86uea0qh9uvr4gn3umcpflvjfpc8ad0d.apps.googleusercontent.com'
-
-GOOGLE_CLIENT_SECRET='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'
-
+# Initialize Flask app
 app = Flask(__name__)
-app.secret_key = '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'  # Replace with your own secret key
+app.secret_key = SECRET_KEY  # Use from config
 
-# Add these database configuration lines
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'  # SQLite database file
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Database configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = SQLALCHEMY_TRACK_MODIFICATIONS
 
 # Toggle this flag to switch between testing mode (mock data) and real API calls
 TESTING = True
-openai.api_key = os.getenv('OPENAI_API_KEY')  # Ensure your API key is set in the environment variable
-ELEVEN_LABS_API_KEY= "sk_509f9a9e1b44d057e5927dfa612289b6a67dcf6207508744"
-ELEVEN_LABS_API_KEY = os.getenv('ELEVEN_LABS_API_KEY')  # Remove the hardcoded key
+
+# Other API configurations
+ELEVEN_LABS_API_KEY = os.getenv('ELEVEN_LABS_API_KEY')
 VOICE_ID = "21m00Tcm4TlvDq8ikWAM"  # Rachel voice
 
 # Google OAuth 2.0 credentials
@@ -50,8 +48,13 @@ client = WebApplicationClient(GOOGLE_CLIENT_ID)
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# Add these new routes
-@app.route('/login', methods=['GET', 'POST'])
+# Move these routes to use main_bp instead of app
+@main_bp.route('/')
+@login_required
+def index():
+    return redirect(url_for('main.default_course'))
+
+@main_bp.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -61,12 +64,15 @@ def login():
         if user and user.check_password(password):
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page or url_for('default_course'))
+            # Make sure the next_page is a relative URL
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('main.default_course')
+            return redirect(next_page)
         
         flash('Invalid email or password')
     return render_template('login.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@main_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -83,16 +89,16 @@ def register():
         db.session.commit()
         
         login_user(user)
-        return redirect(url_for('default_course'))
+        return redirect(url_for('main.default_course'))
     return render_template('register.html')
 
-@app.route('/logout')
+@main_bp.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('index'))
+    return redirect(url_for('main.index'))
 
-@app.route('/login/google')
+@main_bp.route('/login/google')
 def google_login():
     # Find out what URL to hit for Google login
     google_provider_cfg = requests.get(GOOGLE_DISCOVERY_URL).json()
@@ -107,7 +113,7 @@ def google_login():
     )
     return redirect(request_uri)
 
-@app.route('/login/google/callback')
+@main_bp.route('/login/google/callback')
 def google_callback():
     try:
         # Get authorization code Google sent back
@@ -156,7 +162,7 @@ def google_callback():
                 db.session.commit()
 
             login_user(user)
-            return redirect(url_for('default_course'))
+            return redirect(url_for('main.default_course'))
         else:
             flash("Google authentication failed - Email not verified")
             return redirect(url_for('login'))
@@ -165,12 +171,6 @@ def google_callback():
         print(f"Error in Google callback: {str(e)}")
         flash(f"Failed to log in with Google: {str(e)}")
         return redirect(url_for('login'))
-
-# Add @login_required decorator to routes that need authentication
-@app.route('/')
-@login_required
-def index():
-    return redirect(url_for('default_course'))
 
 # Move the YouTube URL functionality to a different route
 @app.route('/youtube-exercises', methods=['GET', 'POST'])
@@ -307,7 +307,7 @@ def youtube_url_handler():
             if transcript:
                 exercises = generate_exercises_from_transcript(transcript)
                 if exercises:
-                    return redirect(url_for('questions'))
+                    return redirect(url_for('main.questions'))
                 else:
                     return "Failed to generate exercises."
             else:
@@ -384,7 +384,7 @@ def get_true_false():
             })
     return jsonify({"error": "No true/false question available"}), 404
 
-@app.route('/questionnaire')
+@main_bp.route('/questionnaire')
 def questionnaire():
     return render_template('questionnaire.html')
 
@@ -411,22 +411,31 @@ def get_script_data(script_id):
             return json.load(f)
     return None
 
-@app.route('/submit-questionnaire', methods=['POST'])
+@main_bp.route('/submit-questionnaire', methods=['POST'])
 def submit_questionnaire():
     answers = request.json
     
     try:
+        print("Received answers:", answers)
         script = generate_vocabulary_script(answers)
         if script:
-            # Save script data to file instead of session
             script_id = save_script_data(script)
-            # Store only the script ID in session
             session['script_id'] = script_id
-            return jsonify({'status': 'success'})
+            # Make sure we're using the correct URL for word assessment
+            redirect_url = url_for('main.word_assessment')
+            print(f"Redirecting to: {redirect_url}")  # Debug print
+            return jsonify({
+                'status': 'success', 
+                'redirect': redirect_url
+            })
         else:
-            return jsonify({'status': 'error', 'message': 'Failed to generate script'}), 500
+            print("Failed to generate script - script is None")
+            return jsonify({'status': 'error', 'message': 'Failed to generate script - no content returned'}), 500
     except Exception as e:
-        print(f"Error generating script: {e}")
+        import traceback
+        print(f"Error generating script: {str(e)}")
+        print("Full traceback:")
+        print(traceback.format_exc())
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 AUDIO_DIR = os.path.join(os.path.dirname(__file__), 'static', 'audio')
@@ -505,90 +514,106 @@ def generate_audio_with_timestamps(text, type_prefix='audio'):
         return None, None
 
 def generate_vocabulary_script(answers):
+    print(f"Debug - Using OpenAI API key in generate_vocabulary_script: {openai.api_key[:10]}...")
+    
     # Get the vocabulary type and any follow-up answer
-    vocab_type = answers.get('vocabulary_type', 'general')
-    follow_up_id = f"{vocab_type}_followup"
+    vocab_type = answers.get('job_area', 'general')  # Changed from vocabulary_type to job_area
+    follow_up_id = f"{vocab_type}_role"  # Changed to match your questionnaire structure
     follow_up_answer = answers.get(follow_up_id, '')
     
     # Construct the specialized field string
     specialized_field = ''
     if vocab_type == 'business' and follow_up_answer:
         specialized_field = f"Business ({follow_up_answer})"
-    elif vocab_type == 'academic' and follow_up_answer:
-        specialized_field = f"Academic ({follow_up_answer})"
-    elif vocab_type == 'industry' and follow_up_answer:
-        specialized_field = f"Industry ({follow_up_answer})"
+    elif vocab_type == 'technology' and follow_up_answer:
+        specialized_field = f"Technology ({follow_up_answer})"
     else:
         specialized_field = vocab_type
 
     # Construct the prompt based on user's answers
     prompt = f"""
     Create a vocabulary learning script for a student with the following profile:
-    - Proficiency Level: {answers.get('proficiency', 'intermediate')}
-    - Main Challenge: {answers.get('struggle', 'vocabulary')}
-    - Vocabulary Type: {specialized_field}
-    - Learning Goal: {answers.get('main_goal', 'general improvement')}
+    - Native Language: {answers.get('native_language', 'Not specified')}
+    - Target Language: {answers.get('target_language', 'English')}
+    - Current Level: {answers.get('current_level', 'intermediate')}
+    - Main Struggles: {', '.join(answers.get('struggles', []))}
+    - Professional Field: {specialized_field}
+    - Confidence Goals: {', '.join(answers.get('confidence_situations', []))}
+    - Learning Preferences: {', '.join(answers.get('learning_preferences', []))}
+    - Specific Topics: {answers.get('specific_topics', 'Not specified')}
     
     Generate a script teaching 5 relevant vocabulary words that would be most useful for this student's profile.
     The words should be appropriate for their level and aligned with their learning goals.
     
-    Important: Since the student is interested in {specialized_field}, please ensure the vocabulary words are specifically relevant to this field.
+    Important: Since the student works in {specialized_field}, please ensure the vocabulary words are specifically relevant to this field.
     """
-    print(prompt)
+    print("Generated prompt:", prompt)
 
-    # Define the function schema
-    function_schema = {
-        "name": "generate_vocabulary_lesson",
-        "description": "Generate a structured vocabulary lesson script",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "words": {
-                    "type": "array",
-                    "minItems": 5,
-                    "maxItems": 5,
-                    "items": {
-                        "type": "object",
-                        "properties": {
-                            "word": {
-                                "type": "string",
-                                "description": "The vocabulary word"
-                            },
-                            "definition": {
-                                "type": "string",
-                                "description": "The definition of the word"
-                            },
-                            "example_sentence": {
-                                "type": "string",
-                                "description": "An example sentence using the word in context"
-                            },
-                            "usage_tip": {
-                                "type": "string",
-                                "description": "A tip on how to use the word"
-                            }
+    # Define the JSON schema for structured output
+    json_schema = {
+        "type": "object",
+        "properties": {
+            "words": {
+                "type": "array",
+                "minItems": 5,
+                "maxItems": 5,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "word": {
+                            "type": "string",
+                            "description": "The vocabulary word"
                         },
-                        "required": ["word", "definition", "example_sentence", "usage_tip"]
-                    }
+                        "definition": {
+                            "type": "string",
+                            "description": "The definition of the word"
+                        },
+                        "example_sentence": {
+                            "type": "string",
+                            "description": "An example sentence using the word in context"
+                        },
+                        "usage_tip": {
+                            "type": "string",
+                            "description": "A tip on how to use the word"
+                        }
+                    },
+                    "required": ["word", "definition", "example_sentence", "usage_tip"]
                 }
-            },
-            "required": ["words"]
-        }
+            }
+        },
+        "required": ["words"]
     }
 
     try:
-        response = openai.ChatCompletion.create(
+        # Force the API key from config
+        from .config import OPENAI_API_KEY
+        openai.api_key = OPENAI_API_KEY
+        
+        print("Making OpenAI API call with key:", openai.api_key[:10], "...")
+        response = openai.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
-                {"role": "system", "content": "You are a vocabulary teaching expert."},
-                {"role": "user", "content": prompt}
+                {
+                    "role": "system",
+                    "content": "You are a vocabulary teaching expert. Return your response as a JSON object."
+                },
+                {
+                    "role": "user",
+                    "content": f"Generate a JSON response for the following request:\n{prompt}"
+                }
             ],
-            functions=[function_schema],
-            function_call={"name": "generate_vocabulary_lesson"}
+            response_format={"type": "json_object"},
+            functions=[{
+                "name": "generate_vocabulary_lesson",
+                "parameters": json_schema
+            }]
         )
+        print("OpenAI API response received:", response.choices[0].message)
 
-        if response.choices[0].message.get("function_call"):
+        # Parse the response
+        if response.choices[0].message.function_call:
             function_response = json.loads(
-                response.choices[0].message["function_call"]["arguments"]
+                response.choices[0].message.function_call.arguments
             )
             
             # Generate audio for each word and its content
@@ -619,82 +644,140 @@ def generate_vocabulary_script(answers):
         print(f"OpenAI API error: {e}")
         raise
 
-@app.route('/generating-course')
+@main_bp.route('/generating-course')
 def generating_course():
     script_id = session.get('script_id')
     if not script_id:
-        return redirect(url_for('questionnaire'))
+        return redirect(url_for('main.questionnaire'))
     
     script = get_script_data(script_id)
     if not script:
-        return redirect(url_for('questionnaire'))
+        return redirect(url_for('main.questionnaire'))
     
     return render_template('generating_course.html', script=script)
 
-@app.route('/course/<course_id>')
-@login_required
+@main_bp.route('/course/<course_id>')
 def course_page(course_id):
-    # Mock course data - this would eventually come from your database
+    # Updated course data with welcome section
     course_structure = {
-        'title': 'Sample Course',
+        'title': 'Your Personalized Language Course',
         'units': [
             {
                 'id': 1,
-                'title': 'Unit 1: Introduction',
-                'expanded': True,
+                'title': 'Getting Started',
+                'expanded': True,  # This unit starts expanded
                 'content': [
-                    {'id': 1, 'type': 'lesson', 'title': 'Welcome to the Course', 'active': True},
-                    {'id': 2, 'type': 'exercise', 'title': 'Practice Exercise 1'},
-                    {'id': 3, 'type': 'quiz', 'title': 'Unit 1 Quiz'}
-                ]
-            },
-            {
-                'id': 2,
-                'title': 'Unit 2: Core Concepts',
-                'expanded': False,
-                'content': [
-                    {'id': 4, 'type': 'lesson', 'title': 'Basic Principles'},
-                    {'id': 5, 'type': 'exercise', 'title': 'Practice Exercise 2'},
-                    {'id': 6, 'type': 'quiz', 'title': 'Unit 2 Quiz'}
+                    {
+                        'id': 1, 
+                        'type': 'welcome', 
+                        'title': 'Welcome to Your Course', 
+                        'active': True  # This makes it selected by default
+                    },
+                    {
+                        'id': 2, 
+                        'type': 'lesson', 
+                        'title': 'First Lesson'
+                    }
                 ]
             }
         ]
     }
     return render_template('course.html', course=course_structure)
 
-@app.route('/course')
-@login_required
+@main_bp.route('/course')
 def default_course():
-    return redirect(url_for('course_page', course_id='default'))
+    return redirect(url_for('main.course_page', course_id='default'))
 
 @app.route('/api/content/<content_type>/<int:content_id>')
-@login_required
 def get_content(content_type, content_id):
-    # Mock content data - this would eventually come from your database
-    content = {
-        'lesson': {
-            'title': 'Sample Lesson',
-            'introduction': 'This is the lesson introduction.',
-            'content': 'Main lesson content goes here.',
-            'summary': 'Lesson summary goes here.'
-        },
-        'exercise': {
-            'title': 'Practice Exercise',
-            'instructions': 'Complete the following exercises.',
-            'questions': ['Question 1', 'Question 2']
-        },
-        'quiz': {
-            'title': 'Unit Quiz',
-            'questions': [
-                {
-                    'question': 'Sample question?',
-                    'options': ['Option 1', 'Option 2', 'Option 3'],
-                    'correct': 0
-                }
-            ]
+    if content_type == 'welcome':
+        # Get the user's assessment results from session
+        assessment = session.get('word_assessment', {})
+        known_words = assessment.get('known_words', [])
+        unknown_words = assessment.get('unknown_words', [])
+        
+        content = {
+            'title': 'Welcome to Your Personalized Course',
+            'introduction': '''
+                <div class="welcome-content">
+                    <h2>Your Learning Journey Begins!</h2>
+                    <p>Based on your assessment, we've created a personalized learning path for you.</p>
+                    
+                    <div class="assessment-summary">
+                        <h3>Your Vocabulary Assessment Results:</h3>
+                        <ul>
+                            <li>Words you know well: {}</li>
+                            <li>Words to learn: {}</li>
+                        </ul>
+                    </div>
+                    
+                    <p>We'll focus on strengthening your vocabulary in these areas while introducing new concepts 
+                    that match your learning goals.</p>
+                    
+                    <div class="next-steps">
+                        <h3>What's Next?</h3>
+                        <p>Click the "Next" button to begin your first lesson!</p>
+                    </div>
+                </div>
+            '''.format(len(known_words), len(unknown_words))
         }
+        return jsonify(content)
+    
+    # ... rest of your existing content types ...
+
+@main_bp.route('/word-assessment')
+def word_assessment():
+    print("Accessing word assessment route")  # Debug print
+    script_id = session.get('script_id')
+    print(f"Script ID from session: {script_id}")  # Debug print
+    
+    if not script_id:
+        print("No script ID found, redirecting to questionnaire")  # Debug print
+        return redirect(url_for('main.questionnaire'))
+    
+    script = get_script_data(script_id)
+    if not script:
+        print("No script data found, redirecting to questionnaire")  # Debug print
+        return redirect(url_for('main.questionnaire'))
+    
+    # Transform script data into the format expected by the template
+    vocabulary = {
+        'words': [
+            {
+                'word': word['word'],
+                'definition': word['definition'],
+                'example': word['example_sentence'],
+                'usage_tip': word['usage_tip'],
+                'difficulty': 3,  # You could calculate this based on word complexity
+                'native_translation': ''  # You could add translation if needed
+            }
+            for word in script['words']
+        ]
     }
-    return jsonify(content.get(content_type, {'error': 'Content not found'}))
+    print(f"Rendering word assessment with vocabulary: {vocabulary}")  # Debug print
+    
+    return render_template('word_assessment.html', vocabulary=vocabulary)
+
+@main_bp.route('/submit-assessment', methods=['POST'])
+def submit_assessment():
+    data = request.json
+    word = data.get('word')
+    is_known = data.get('known')
+    
+    # Initialize the assessment data structure if it doesn't exist
+    if 'word_assessment' not in session:
+        session['word_assessment'] = {
+            'known_words': [],
+            'unknown_words': []
+        }
+    
+    # Add the word to the appropriate list
+    if is_known:
+        session['word_assessment']['known_words'].append(word)
+    else:
+        session['word_assessment']['unknown_words'].append(word)
+    
+    return jsonify({'status': 'success'})
 
 if __name__ == '__main__':
     with app.app_context():

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Canva Template</title>
+    <style>
+        .error {
+            color: red;
+        }
+
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Test Canva Video Generation</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="{{ category }}">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if template_details %}
+    <div>
+        <h2>Template Details:</h2>
+        <pre>{{ template_details | tojson(indent=2) }}</pre>
+    </div>
+    {% endif %}
+
+    <div>
+        <h2>Test Settings:</h2>
+        <p>Template ID: DAGZKde9TQQ</p>
+        <p>Word: Serendipity</p>
+        <p>Definition: The occurrence and development of events by chance in a happy or beneficial way</p>
+        <p>Example: Finding this book was pure serendipity.</p>
+    </div>
+
+    <form action="{{ url_for('main.test_template') }}" method="post">
+        <button type="submit">Generate Video</button>
+    </form>
+</body>
+
+</html>

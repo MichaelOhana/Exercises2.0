@@ -1,21 +1,21 @@
 const ALL_LANGUAGES = [
-    'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Assamese', 'Aymara', 
-    'Azerbaijani', 'Balochi', 'Bamanankan', 'Bashkir', 'Basque', 'Belarusian', 
-    'Bengali', 'Bhojpuri', 'Bikol', 'Bosnian', 'Bulgarian', 'Burmese', 'Cantonese', 
-    'Catalan', 'Cebuano', 'Chechen', 'Cherokee', 'Chichewa', 'Chinese (Mandarin)', 
-    'Chuvash', 'Cornish', 'Corsican', 'Croatian', 'Czech', 'Danish', 'Dari', 
-    'Dholuo', 'Dutch', 'Dzongkha', 'English', 'Esperanto', 'Estonian', 'Ewe', 
-    'Faroese', 'Fijian', 'Filipino', 'Finnish', 'French', 'Galician', 'Georgian', 
-    'German', 'Greek', 'Greenlandic', 'Guarani', 'Gujarati', 'Haitian Creole', 
-    'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic', 
-    'Igbo', 'Ilocano', 'Indonesian', 'Inuktitut', 'Irish', 'Italian', 'Japanese', 
-    'Javanese', 'Kannada', 'Kashmiri', 'Kazakh', 'Khmer', 'Kinyarwanda', 'Kirundi', 
-    'Korean', 'Kurdish', 'Kyrgyz', 'Lao', 'Latvian', 'Lingala', 'Lithuanian', 
-    'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese', 
-    'Maori', 'Marathi', 'Mongolian', 'Nahuatl', 'Navajo', 'Nepali', 'Norwegian', 
-    'Odia', 'Oromo', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi', 
-    'Quechua', 'Romanian', 'Russian', 'Samoan', 'Sanskrit', 'Serbian', 'Shona', 
-    'Sindhi', 'Sinhala', 'Slovak', 'Slovene', 'Somali', 'Spanish', 'Swahili', 
+    'Afrikaans', 'Albanian', 'Amharic', 'Arabic', 'Armenian', 'Assamese', 'Aymara',
+    'Azerbaijani', 'Balochi', 'Bamanankan', 'Bashkir', 'Basque', 'Belarusian',
+    'Bengali', 'Bhojpuri', 'Bikol', 'Bosnian', 'Bulgarian', 'Burmese', 'Cantonese',
+    'Catalan', 'Cebuano', 'Chechen', 'Cherokee', 'Chichewa', 'Chinese (Mandarin)',
+    'Chuvash', 'Cornish', 'Corsican', 'Croatian', 'Czech', 'Danish', 'Dari',
+    'Dholuo', 'Dutch', 'Dzongkha', 'English', 'Esperanto', 'Estonian', 'Ewe',
+    'Faroese', 'Fijian', 'Filipino', 'Finnish', 'French', 'Galician', 'Georgian',
+    'German', 'Greek', 'Greenlandic', 'Guarani', 'Gujarati', 'Haitian Creole',
+    'Hausa', 'Hawaiian', 'Hebrew', 'Hindi', 'Hmong', 'Hungarian', 'Icelandic',
+    'Igbo', 'Ilocano', 'Indonesian', 'Inuktitut', 'Irish', 'Italian', 'Japanese',
+    'Javanese', 'Kannada', 'Kashmiri', 'Kazakh', 'Khmer', 'Kinyarwanda', 'Kirundi',
+    'Korean', 'Kurdish', 'Kyrgyz', 'Lao', 'Latvian', 'Lingala', 'Lithuanian',
+    'Luxembourgish', 'Macedonian', 'Malagasy', 'Malay', 'Malayalam', 'Maltese',
+    'Maori', 'Marathi', 'Mongolian', 'Nahuatl', 'Navajo', 'Nepali', 'Norwegian',
+    'Odia', 'Oromo', 'Pashto', 'Persian', 'Polish', 'Portuguese', 'Punjabi',
+    'Quechua', 'Romanian', 'Russian', 'Samoan', 'Sanskrit', 'Serbian', 'Shona',
+    'Sindhi', 'Sinhala', 'Slovak', 'Slovene', 'Somali', 'Spanish', 'Swahili',
     'Swedish', 'Tajik', 'Tamil', 'Tatar', 'Telugu'
 ].sort();
 
@@ -151,6 +151,7 @@ const questions = [
         ],
         followUps: {
             'business': {
+                id: 'business_role',
                 text: "What is your role in business?",
                 type: 'dropdown',
                 options: [
@@ -162,7 +163,19 @@ const questions = [
                     { value: 'other', label: 'Other', allowText: true }
                 ]
             },
-            // ... similar followUps for other job areas
+            'technology': {
+                id: 'tech_role',
+                text: "What is your role in technology?",
+                type: 'dropdown',
+                options: [
+                    { value: 'developer', label: 'Developer' },
+                    { value: 'designer', label: 'Designer' },
+                    { value: 'product_manager', label: 'Product Manager' },
+                    { value: 'data_scientist', label: 'Data Scientist' },
+                    { value: 'other', label: 'Other', allowText: true }
+                ]
+            },
+            // Add similar followUps for other job areas
         }
     },
     {
@@ -216,21 +229,21 @@ let currentFollowUp = null;
 function updateUI() {
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-    
+
     document.querySelector('.progress-bar').style.width = `${progress}%`;
-    document.getElementById('question-number').textContent = 
+    document.getElementById('question-number').textContent =
         `Question ${currentQuestionIndex + 1} of ${questions.length}`;
-    
+
     let questionText = currentQuestion.text;
     if (questionText.includes('[selected language]')) {
         const targetLanguage = answers.target_language;
         questionText = questionText.replace('[selected language]', targetLanguage || '');
     }
-    
+
     document.getElementById('question-text').textContent = questionText;
-    
+
     renderQuestionOptions(currentQuestion);
-    
+
     document.getElementById('prev-btn').disabled = currentQuestionIndex === 0;
     const nextBtn = document.getElementById('next-btn');
     nextBtn.textContent = currentQuestionIndex === questions.length - 1 ? 'Submit' : 'Next';
@@ -240,7 +253,7 @@ function renderQuestionOptions(question) {
     const container = document.getElementById('options-container');
     container.innerHTML = '';
 
-    switch(question.type) {
+    switch (question.type) {
         case 'dropdown':
             renderDropdown(question, container);
             break;
@@ -314,7 +327,7 @@ function renderSearchableLanguageDropdown(question, container) {
 
     function updateOptions(searchText = '') {
         dropdown.innerHTML = '';
-        const filteredLanguages = question.allLanguages.filter(lang => 
+        const filteredLanguages = question.allLanguages.filter(lang =>
             lang.toLowerCase().includes(searchText.toLowerCase())
         );
 
@@ -421,7 +434,7 @@ function renderCheckboxOptions(question, container) {
         input.addEventListener('change', () => {
             const selectedOptions = Array.from(checkboxGroup.querySelectorAll('input:checked'))
                 .map(input => input.value);
-                
+
             if (selectedOptions.length > question.maxSelections) {
                 input.checked = false;
                 return;
@@ -433,22 +446,22 @@ function renderCheckboxOptions(question, container) {
             if (option.value === 'other' && option.allowText) {
                 const otherInputId = `${question.id}_other_text`;
                 const existingInput = document.getElementById(otherInputId);
-                
+
                 if (input.checked && !existingInput) {
                     const textWrapper = document.createElement('div');
                     textWrapper.className = 'other-text-input';
-                    
+
                     const textInput = document.createElement('input');
                     textInput.type = 'text';
                     textInput.id = otherInputId;
                     textInput.className = 'form-control mt-2';
                     textInput.placeholder = 'Please specify';
                     textInput.value = answers[otherInputId] || '';
-                    
+
                     textInput.addEventListener('input', (e) => {
                         answers[otherInputId] = e.target.value;
                     });
-                    
+
                     textWrapper.appendChild(textInput);
                     wrapper.appendChild(textWrapper);
                 } else if (!input.checked && existingInput) {
@@ -467,18 +480,18 @@ function renderCheckboxOptions(question, container) {
             const otherInputId = `${question.id}_other_text`;
             const textWrapper = document.createElement('div');
             textWrapper.className = 'other-text-input';
-            
+
             const textInput = document.createElement('input');
             textInput.type = 'text';
             textInput.id = otherInputId;
             textInput.className = 'form-control mt-2';
             textInput.placeholder = 'Please specify';
             textInput.value = answers[otherInputId] || '';
-            
+
             textInput.addEventListener('input', (e) => {
                 answers[otherInputId] = e.target.value;
             });
-            
+
             textWrapper.appendChild(textInput);
             wrapper.appendChild(textWrapper);
         }
@@ -515,7 +528,7 @@ function renderTextInput(question, container, isFollowUp = false) {
 
 function handleNext() {
     const currentQuestion = currentFollowUp || questions[currentQuestionIndex];
-    
+
     if (!validateAnswer(currentQuestion)) {
         return;
     }
@@ -526,7 +539,7 @@ function handleNext() {
         const selectedOptions = answers[currentQuestion.id];
         if (Array.isArray(selectedOptions) && selectedOptions.length > 0) {
             parentQuestionIndex = currentQuestionIndex;
-            
+
             followUpQueue = selectedOptions
                 .filter(option => currentQuestion.followUps[option])
                 .map(option => ({
@@ -542,6 +555,22 @@ function handleNext() {
                 renderFollowUpQuestion(followUp);
                 return;
             }
+        }
+    }
+
+    if (currentQuestion.id === 'job_area' && !currentQuestion.isFollowUp) {
+        const selectedJob = answers[currentQuestion.id];
+        if (selectedJob && currentQuestion.followUps[selectedJob]) {
+            parentQuestionIndex = currentQuestionIndex;
+            const followUp = {
+                ...currentQuestion.followUps[selectedJob],
+                parentId: currentQuestion.id,
+                parentOption: selectedJob,
+                isFollowUp: true,
+                id: `${currentQuestion.id}_${selectedJob}_followup`
+            };
+            renderFollowUpQuestion(followUp);
+            return;
         }
     }
 
@@ -576,7 +605,7 @@ function handlePrevious() {
 function validateAnswer(question) {
     const questionToValidate = currentFollowUp || question;
     const answer = answers[questionToValidate.id];
-    
+
     if (questionToValidate.optional) {
         return true;
     }
@@ -600,6 +629,7 @@ function validateAnswer(question) {
 
 async function submitAnswers() {
     try {
+        console.log('Submitting answers:', answers);  // Debug log
         const response = await fetch('/submit-questionnaire', {
             method: 'POST',
             headers: {
@@ -608,14 +638,19 @@ async function submitAnswers() {
             body: JSON.stringify(answers)
         });
 
+        const data = await response.json();
+        console.log('Server response:', data);  // Debug log
+
         if (response.ok) {
-            window.location.href = '/generating-course';
+            console.log('Redirecting to:', data.redirect);  // Debug log
+            window.location.href = data.redirect;
         } else {
-            alert('There was an error submitting your answers. Please try again.');
+            console.error('Server error:', data);
+            alert('Error: ' + (data.message || 'Unknown error occurred'));
         }
     } catch (error) {
-        console.error('Error:', error);
-        alert('There was an error submitting your answers. Please try again.');
+        console.error('Fetch error:', error);
+        alert('There was an error submitting your answers: ' + error.message);
     }
 }
 
@@ -628,7 +663,7 @@ function renderFollowUpQuestion(followUp) {
     const progress = ((parentQuestionIndex + 1) / questions.length) * 100;
     document.querySelector('.progress-bar').style.width = `${progress}%`;
 
-    document.getElementById('question-number').textContent = 
+    document.getElementById('question-number').textContent =
         `Question ${parentQuestionIndex + 1} - Follow-up`;
 
     document.getElementById('question-text').textContent = followUp.text;
@@ -641,7 +676,7 @@ document.getElementById('next-btn').addEventListener('click', handleNext);
 document.getElementById('prev-btn').addEventListener('click', handlePrevious);
 
 // Make sure the initialization happens after the DOM is loaded:
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Initialize the UI
     updateUI();
 });

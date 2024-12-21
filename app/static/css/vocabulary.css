@@ -1,0 +1,339 @@
+/* Vocabulary Lesson Container */
+.vocabulary-lesson {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.vocabulary-lesson h1 {
+    font-size: 2.5rem;
+    color: #1a1a1a;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.vocabulary-lesson .introduction {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #555;
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 0 1rem;
+}
+
+/* Word Card */
+.word-card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Pronunciation Section */
+.pronunciation-section {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.syllables {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #1a73e8;
+}
+
+.syllable {
+    cursor: pointer;
+    padding: 0.5rem;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+
+.syllable:hover {
+    color: #1557b0;
+    transform: scale(1.1);
+}
+
+.phonetic {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 1rem;
+    font-family: monospace;
+}
+
+.audio-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.play-word {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.play-word:hover {
+    background-color: #1557b0;
+    transform: translateY(-1px);
+}
+
+.speed-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+    cursor: pointer;
+}
+
+/* Definition Section */
+.definition-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.definition-section h3 {
+    color: #1a1a1a;
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+}
+
+.definition p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #444;
+    margin-bottom: 1.5rem;
+}
+
+.context p {
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #666;
+    font-style: italic;
+}
+
+/* Examples Section */
+.examples-section h3 {
+    color: #1a1a1a;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+}
+
+.example-card {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.example-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.example-content i {
+    font-size: 1.5rem;
+    color: #1a73e8;
+}
+
+.example-content img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.example-sentence {
+    flex-grow: 1;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    color: #444;
+}
+
+.highlight {
+    color: #1a73e8;
+    font-weight: 500;
+}
+
+.play-example {
+    background: none;
+    border: none;
+    color: #1a73e8;
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.play-example:hover {
+    background-color: rgba(26, 115, 232, 0.1);
+}
+
+/* Similar Sentences */
+.similar-sentences {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.show-similar {
+    background: none;
+    border: 1px solid #1a73e8;
+    color: #1a73e8;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.show-similar:hover {
+    background-color: rgba(26, 115, 232, 0.1);
+}
+
+.similar-content {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: white;
+    border-radius: 8px;
+}
+
+.similar-content p {
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+/* Animations */
+@keyframes highlight {
+    0% {
+        background-color: rgba(26, 115, 232, 0.2);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+.syllable.active {
+    animation: highlight 1s ease;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .vocabulary-lesson {
+        padding: 1rem;
+    }
+
+    .word-card {
+        padding: 1.5rem;
+    }
+
+    .syllables {
+        font-size: 1.5rem;
+    }
+
+    .example-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .example-content img {
+        width: 100px;
+        height: 100px;
+    }
+
+    .audio-controls {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Step Navigation */
+.word-steps {
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.step {
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    padding: 2rem;
+}
+
+.step.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.step.previous {
+    transform: translateX(-100%);
+}
+
+.step-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    margin-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.step-indicators {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.prev-step,
+.next-step {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.prev-step:disabled,
+.next-step:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.prev-step:not(:disabled):hover,
+.next-step:not(:disabled):hover {
+    background-color: #1557b0;
+    transform: translateY(-1px);
+}
+
+/* Touch Navigation */
+.word-steps {
+    touch-action: pan-y pinch-zoom;
+}
+
+@media (max-width: 768px) {
+    .step {
+        padding: 1rem;
+    }
+}

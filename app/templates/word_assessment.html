@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/word_assessment.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center mb-4" style="color: #2c3e50; font-weight: bold;">Vocabulary Check</h1>
+    <p class="text-center text-muted mb-4" style="font-size: 1.2em;">Swipe right if you know the word, left if you
+        don't. Tap the card to see details!</p>
+
+    {% if vocabulary and vocabulary.words %}
+    <div class="swipe-container">
+        {% for word in vocabulary.words %}
+        <div class="word-card" data-word-index="{{ loop.index0 }}">
+            <div class="card-front">
+                <div class="word-text">{{ word.word }}</div>
+                <div class="swipe-instructions">
+                    <div class="swipe-left">
+                        <span style="font-size: 1.5em;">👈</span> Don't know
+                    </div>
+                    <div class="swipe-right">
+                        Know it <span style="font-size: 1.5em;">👉</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-back">
+                <h3>{{ word.word }}</h3>
+                <p><strong>Definition:</strong> {{ word.definition }}</p>
+                <p><strong>Example:</strong> {{ word.example }}</p>
+                <p><strong>Tip:</strong> {{ word.usage_tip }}</p>
+                {% if word.native_translation %}
+                <p><strong>Translation:</strong> {{ word.native_translation }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="swipe-buttons">
+        <button class="btn btn-danger" onclick="swipeLeft()">
+            <i class="fas fa-times"></i> Don't Know
+        </button>
+        <button class="btn btn-success" onclick="swipeRight()">
+            <i class="fas fa-check"></i> Know It
+        </button>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress"></div>
+    </div>
+    {% else %}
+    <p class="text-center">No vocabulary data available.</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- Hammer.js for touch gestures -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+<script src="{{ url_for('static', filename='js/word_assessment.js') }}"></script>
+{% endblock %}

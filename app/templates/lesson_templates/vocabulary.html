@@ -1,0 +1,83 @@
+<div class="vocabulary-lesson">
+    <div class="word-section">
+        {% for word in content.words %}
+        <div class="word-card">
+            <!-- Pronunciation Section -->
+            <div class="pronunciation-section">
+                <div class="syllables">
+                    {% for syllable in word.syllables %}
+                    <span class="syllable" data-audio="{{ word.audio.syllables[loop.index0] }}">
+                        {{ syllable }}
+                    </span>
+                    {% if not loop.last %}-{% endif %}
+                    {% endfor %}
+                </div>
+                <div class="phonetic">{{ word.phonetic }}</div>
+                <div class="audio-controls">
+                    <button class="play-word" data-audio="{{ word.audio.word }}">
+                        <i class="fas fa-play"></i> Play Word
+                    </button>
+                    <label class="speed-toggle">
+                        <input type="checkbox" class="slow-speed">
+                        Slow Speed
+                    </label>
+                </div>
+            </div>
+
+            <!-- Definition Section -->
+            <div class="definition-section">
+                <div class="definition" data-audio="definition_{{ loop.index }}.mp3">
+                    <h3>Definition</h3>
+                    <p>{{ word.definition }}</p>
+                    <button class="play-definition">
+                        <i class="fas fa-play"></i>
+                    </button>
+                </div>
+                <div class="context">
+                    <h3>Context</h3>
+                    <p>{{ word.context_explanation }}</p>
+                </div>
+            </div>
+
+            <!-- Examples Section -->
+            <div class="examples-section">
+                <h3>Examples</h3>
+                {% for example in word.examples %}
+                <div class="example-card">
+                    <div class="example-content">
+                        {% if example.icon %}
+                        <i class="fas fa-{{ example.icon }}"></i>
+                        {% endif %}
+                        {% if example.image %}
+                        <img src="{{ url_for('static', filename='images/' + example.image) }}"
+                            alt="Example illustration">
+                        {% endif %}
+                        {% if example.animation %}
+                        <img src="{{ url_for('static', filename='animations/' + example.animation) }}"
+                            alt="Example animation">
+                        {% endif %}
+                        <p class="example-sentence">
+                            {{ example.sentence|replace(example.highlight_word,
+                            '<span class="highlight">' + example.highlight_word + '</span>') }}
+                        </p>
+                        <button class="play-example">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                    {% if example.similar_sentences %}
+                    <div class="similar-sentences">
+                        <button class="show-similar">Show Similar Examples</button>
+                        <div class="similar-content" style="display: none;">
+                            {% for similar in example.similar_sentences %}
+                            <p>{{ similar }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

@@ -123,3 +123,50 @@
     background-color: #007bff;
     color: white;
 }
+
+.welcome-content {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.welcome-content h2 {
+    color: #2c3e50;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.assessment-summary {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 30px 0;
+}
+
+.assessment-summary h3 {
+    color: #3498db;
+    margin-bottom: 15px;
+}
+
+.assessment-summary ul {
+    list-style: none;
+    padding: 0;
+}
+
+.assessment-summary li {
+    margin: 10px 0;
+    font-size: 1.1em;
+}
+
+.next-steps {
+    text-align: center;
+    margin-top: 40px;
+    padding: 20px;
+    background: #e8f4f8;
+    border-radius: 10px;
+}
+
+.next-steps h3 {
+    color: #2980b9;
+    margin-bottom: 15px;
+}
